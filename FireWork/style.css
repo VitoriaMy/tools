@@ -75,6 +75,48 @@ body {
     transform: translateZ(0)
 }
 
+.canvas-container .bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(0deg, #13b4e5 0%, #13b4e5 46%, #02175b 80%);
+}
+
+
+.canvas-container .bg::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("./star.svg");
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+    background-position: center top;
+}
+
+
+.canvas-container .bg::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("./side.svg");
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+    background-position: center bottom;
+}
+
+.canvas-container::after {
+    content: "";
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    background-image: url("./font.svg");
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+    background-position: center bottom;
+}
+
 .controls {
     position: absolute;
     top: 0;
@@ -82,12 +124,12 @@ body {
     padding-bottom: 50px;
     display: flex;
     justify-content: space-between;
-    transition: opacity .3s,visibility .3s
+    transition: opacity .3s, visibility .3s
 }
 
 @media(min-width: 840px) {
     .controls {
-        visibility:visible
+        visibility: visible
     }
 
     .controls.hide:hover {
@@ -101,8 +143,8 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: rgba(0,0,0,0.42);
-    transition: opacity .3s,visibility .3s
+    background-color: rgba(0, 0, 0, 0.42);
+    transition: opacity .3s, visibility .3s
 }
 
 .menu__inner-wrap {
@@ -165,11 +207,11 @@ body {
     width: 50%;
     height: 30px;
     font-size: 1rem;
-    font-family: "Russo One",arial,sans-serif;
-    color: rgba(255,255,255,0.5);
+    font-family: "Russo One", arial, sans-serif;
+    color: rgba(255, 255, 255, 0.5);
     letter-spacing: .06em;
     background-color: transparent;
-    border: 1px solid rgba(255,255,255,0.5)
+    border: 1px solid rgba(255, 255, 255, 0.5)
 }
 
 .menu .form-option--select select option {
@@ -185,8 +227,10 @@ body {
 }
 
 @media(max-width: 840px) {
-    .menu .form-option select,.menu .form-option input {
-        outline:0
+
+    .menu .form-option select,
+    .menu .form-option input {
+        outline: 0
     }
 }
 
@@ -215,7 +259,7 @@ body {
 
 @media(min-width: 840px) {
     .btn:hover {
-        opacity:.32
+        opacity: .32
     }
 
     .btn--bright:hover {
@@ -237,12 +281,13 @@ body {
 }
 
 .credits a {
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
     text-decoration: none
 }
 
-.credits a:hover,.credits a:active {
-    color: rgba(255,255,255,0.75);
+.credits a:hover,
+.credits a:active {
+    color: rgba(255, 255, 255, 0.75);
     text-decoration: underline
 }
 
@@ -281,17 +326,17 @@ body {
     margin: 10px;
     padding: 20px;
     border-radius: .3em;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0, 0, 0, 0.4);
     opacity: 0;
-    transform: scale(0.9,0.9);
-    transition-property: opacity,transform;
+    transform: scale(0.9, 0.9);
+    transition-property: opacity, transform;
     transition-timing-function: ease-in;
     transition-duration: .25s
 }
 
 @media(min-width: 840px) {
     .help-modal__dialog {
-        font-size:1.25rem;
+        font-size: 1.25rem;
         max-width: 500px
     }
 }
@@ -307,10 +352,10 @@ body {
     -webkit-overflow-scrolling: touch;
     margin: 1em 0;
     padding: 1em 0;
-    border-top: 1px solid rgba(255,255,255,0.25);
-    border-bottom: 1px solid rgba(255,255,255,0.25);
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
     line-height: 1.5;
-    color: rgba(255,255,255,0.75)
+    color: rgba(255, 255, 255, 0.75)
 }
 
 .help-modal__close-btn {
@@ -320,16 +365,18 @@ body {
     border-radius: 2px;
     padding: .25em .75em;
     margin-top: .36em;
-    font-family: "Russo One",arial,sans-serif;
+    font-family: "Russo One", arial, sans-serif;
     font-size: 1em;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
     text-transform: uppercase;
     letter-spacing: .06em;
-    background-color: rgba(255,255,255,0.25);
-    transition: color .3s,background-color .3s
+    background-color: rgba(255, 255, 255, 0.25);
+    transition: color .3s, background-color .3s
 }
 
-.help-modal__close-btn:hover,.help-modal__close-btn:active,.help-modal__close-btn:focus {
+.help-modal__close-btn:hover,
+.help-modal__close-btn:active,
+.help-modal__close-btn:focus {
     color: #FFF;
     background-color: #09F
 }
@@ -347,7 +394,7 @@ body {
 
 .help-modal.active .help-modal__dialog {
     opacity: 1;
-    transform: scale(1,1);
+    transform: scale(1, 1);
     transition-timing-function: ease-out;
     transition-duration: .4s
 }

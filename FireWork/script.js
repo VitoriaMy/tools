@@ -65,9 +65,11 @@ const PI_HALF = Math.PI * 0.5;
 // Stage.disableHighDPI = true;
 const trailsStage = new Stage('trails-canvas');
 const mainStage = new Stage('main-canvas');
+const renderStage = new Stage('render-canvas');
 const stages = [
 	trailsStage,
-	mainStage
+	mainStage,
+	renderStage,
 ];
 
 
@@ -1447,6 +1449,8 @@ function render(speed) {
 	
 	trailsCtx.setTransform(1, 0, 0, 1, 0, 0);
 	mainCtx.setTransform(1, 0, 0, 1, 0, 0);
+
+	updateRender()
 }
 
 
@@ -2003,6 +2007,26 @@ function createParticleCollection() {
 		collection[color] = [];
 	});
 	return collection;
+}
+
+
+function updateRender(){
+	const trailsCtx = trailsStage.ctx;
+	const renderCtx = renderStage.ctx;
+	
+	// 判断黑色的阈值
+	const threshold = 70;
+
+	// trailsCtx提取像素数据
+	const imageData = trailsCtx.getImageData(0, 0, trailsStage.naturalWidth, trailsStage.naturalHeight);
+	// 黑色像素点的透明度设为0
+	for (let i = 0; i < imageData.data.length; i += 4) {
+		if (imageData.data[i] < threshold && imageData.data[i + 1] < threshold && imageData.data[i + 2] < threshold) {
+			imageData.data[i + 3] = 0;
+		}
+	}
+	// 将修改后的像素数据放回renderCtx
+	renderCtx.putImageData(imageData, 0, 0);
 }
 
 

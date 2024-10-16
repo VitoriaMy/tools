@@ -40,10 +40,15 @@
     </div>
     <div class="container">
         <div class="stage-container" style="width: 871px; height: 911px;">
-            <div class="canvas-container" ><canvas id="trails-canvas"
-                    width="871" height="911" style="touch-action: none; width: 871px; height: 911px;"></canvas><canvas
-                    id="main-canvas" width="871" height="911"
-                    style="touch-action: none; width: 871px; height: 911px;"></canvas></div>
+            <div class="canvas-container">
+                <canvas id="trails-canvas" width="871" height="911"
+                    style="touch-action: none; width: 871px; height: 911px;"></canvas>
+                <canvas id="main-canvas" width="871" height="911"
+                    style="touch-action: none; width: 871px; height: 911px;"></canvas>
+                <div class="bg"></div>
+                <canvas id="render-canvas" width="871" height="911"
+                    style="touch-action: none; width: 871px; height: 911px;"></canvas>
+            </div>
             <div class="controls">
                 <div class="btn pause-btn"><svg fill="white" width="24" height="24">
                         <use href="#icon-pause" xlink:href="#icon-pause"></use>
