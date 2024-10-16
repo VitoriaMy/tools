@@ -79,19 +79,19 @@ body {
     position: absolute;
     width: 100%;
     height: 100%;
-    background-image: linear-gradient(0deg, #13b4e5 0%, #13b4e5 46%, #02175b 80%);
+    background-image: linear-gradient(0deg, #13b4e5 0%, #13b4e5 20%, #02175b 58%);
 }
 
 
 .canvas-container .bg::before {
     content: "";
     position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 100%;
+    height: 50%;
     background-image: url("./star.svg");
-    background-size: 100% auto;
-    background-repeat: no-repeat;
-    background-position: center top;
+    background-position: 0 top;
 }
 
 
