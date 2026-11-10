@@ -382,25 +382,53 @@ function refresh() {
 
 // ---------- 交互：仅模型表面取色，画布拖动旋转视角 ----------
 let orbitState = null;
+const activePointers = new Map();
+let pinchState = null;
 
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
 canvas.addEventListener('pointerdown', (e) => {
     if (e.button !== 0 && e.button !== 2) return;
     setPointer(e);
-    orbitState = { startX: e.clientX, startY: e.clientY, theta: spherical.theta, phi: spherical.phi };
+    if (e.pointerType === 'touch') {
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (activePointers.size === 2) {
+            orbitState = null;
+            const [first, second] = [...activePointers.values()];
+            pinchState = {
+                distance: Math.hypot(first.x - second.x, first.y - second.y),
+                radius: spherical.radius,
+            };
+            return;
+        }
+    }
+    orbitState = { startX: e.clientX, startY: e.clientY, theta: spherical.theta, phi: spherical.phi, moved: false };
     canvas.style.cursor = 'grabbing';
 });
 
 window.addEventListener('pointermove', (e) => {
     setPointer(e);
+    if (activePointers.has(e.pointerId)) activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (activePointers.size >= 2) {
+        const [first, second] = [...activePointers.values()];
+        const distance = Math.hypot(first.x - second.x, first.y - second.y);
+        if (pinchState && pinchState.distance > 0) {
+            spherical.radius = clamp(pinchState.radius * pinchState.distance / distance, 2, 2000);
+            updateCamera();
+        }
+        return;
+    }
     if (orbitState) {
         const dx = e.clientX - orbitState.startX;
         const dy = e.clientY - orbitState.startY;
-        spherical.theta = orbitState.theta - dx * 0.005;
-        spherical.phi = clamp(orbitState.phi - dy * 0.005, 0.15, Math.PI - 0.15);
-        updateCamera();
+        if (Math.hypot(dx, dy) > 3) orbitState.moved = true;
+        if (orbitState.moved) {
+            spherical.theta = orbitState.theta - dx * 0.005;
+            spherical.phi = clamp(orbitState.phi - dy * 0.005, 0.15, Math.PI - 0.15);
+            updateCamera();
+        }
     } else {
+        if (e.pointerType === 'touch') return;
         const modelHit = getModelHit();
         updateHover(modelHit);
         canvas.style.cursor = modelHit ? 'crosshair' : 'default';
@@ -408,9 +436,23 @@ window.addEventListener('pointermove', (e) => {
     }
 });
 
-window.addEventListener('pointerup', () => {
+window.addEventListener('pointerup', (e) => {
+    const shouldPick = e.pointerType === 'touch' && orbitState && !orbitState.moved;
+    if (shouldPick) {
+        setPointer(e);
+        updateHover(getModelHit());
+        refresh();
+    }
+    activePointers.delete(e.pointerId);
     orbitState = null;
+    if (activePointers.size < 2) pinchState = null;
     canvas.style.cursor = 'default';
+});
+
+window.addEventListener('pointercancel', (e) => {
+    activePointers.delete(e.pointerId);
+    orbitState = null;
+    pinchState = null;
 });
 
 canvas.addEventListener('wheel', (e) => {
