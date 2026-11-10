@@ -293,9 +293,9 @@ for (const key of ['r', 'g', 'b']) {
         refresh();
     };
     const valueAt = (clientX) => {
-        const rect = el.control.getBoundingClientRect();
-        const trackWidth = Math.max(1, rect.width - 18);
-        return Math.round(clamp((clientX - rect.left - 9) / trackWidth, 0, 1) * 255);
+        const controlRect = el.control.getBoundingClientRect();
+        const trackRect = el.control.querySelector('.range-track').getBoundingClientRect();
+        return Math.round(clamp((clientX - trackRect.left) / trackRect.width, 0, 1) * 255);
     };
 
     el.control.addEventListener('pointerdown', (event) => {
@@ -353,9 +353,12 @@ for (const key of ['r', 'g', 'b']) {
 function renderRangeControl(key) {
     const range = channelRanges[key];
     const el = channelUI[key];
-    const trackWidth = Math.max(0, el.control.clientWidth - 18);
-    const minPosition = 9 + (range.min / 255) * trackWidth;
-    const maxPosition = 9 + (range.max / 255) * trackWidth;
+    const controlRect = el.control.getBoundingClientRect();
+    const trackRect = el.control.querySelector('.range-track').getBoundingClientRect();
+    const trackLeft = trackRect.left - controlRect.left;
+    const trackWidth = trackRect.width;
+    const minPosition = trackLeft + (range.min / 255) * trackWidth;
+    const maxPosition = trackLeft + (range.max / 255) * trackWidth;
     el.minThumb.style.left = `${minPosition}px`;
     el.maxThumb.style.left = `${maxPosition}px`;
     el.fill.style.left = `${minPosition}px`;
@@ -406,6 +409,30 @@ let orbitState = null;
 let pinchState = null;
 let touchOrbitState = null;
 let webkitGestureRadius = null;
+const edgeGestureTouches = new Set();
+const EDGE_GESTURE_WIDTH = 20;
+
+document.addEventListener('touchstart', (e) => {
+    if (e.target.closest?.('.range-control')) return;
+    for (const touch of e.changedTouches) {
+        if (touch.clientX <= EDGE_GESTURE_WIDTH || window.innerWidth - touch.clientX <= EDGE_GESTURE_WIDTH) {
+            edgeGestureTouches.add(touch.identifier);
+            e.preventDefault();
+        }
+    }
+}, { capture: true, passive: false });
+
+document.addEventListener('touchmove', (e) => {
+    if (Array.from(e.changedTouches).some(touch => edgeGestureTouches.has(touch.identifier))) {
+        e.preventDefault();
+    }
+}, { capture: true, passive: false });
+
+const clearEdgeGestureTouches = (e) => {
+    for (const touch of e.changedTouches) edgeGestureTouches.delete(touch.identifier);
+};
+document.addEventListener('touchend', clearEdgeGestureTouches, { capture: true, passive: false });
+document.addEventListener('touchcancel', clearEdgeGestureTouches, { capture: true, passive: false });
 
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 canvas.addEventListener('pointerleave', clearHover);
