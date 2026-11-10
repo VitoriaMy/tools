@@ -43,6 +43,9 @@
             border-radius: 0.625rem; background: #2a2e37; color: #cfd3d9;
         }
         .badge.hovering { background: #4a4a1a; color: #f5f5c8; }
+        .view-options { margin: 0 0 0.75rem; }
+        .view-options label { display: inline-flex; align-items: center; gap: 0.5rem; color: #cfd3d9; font-size: 0.75rem; cursor: pointer; }
+        .view-options input { width: 1rem; height: 1rem; margin: 0; accent-color: #7a8cff; }
         section { margin-bottom: 1.125rem; }
         .row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; margin: 0.25rem 0; }
         .row .label { color: #9aa0a6; flex: none; }
@@ -100,6 +103,10 @@
                 <span><strong>取色</strong> 点按或悬停模型</span>
                 <span><strong>视角</strong> 拖动旋转 · 滚轮或双指缩放</span>
             </p>
+
+            <section class="view-options">
+                <label><input id="axesToggle" type="checkbox" checked>显示坐标轴</label>
+            </section>
 
             <section class="swatch-block">
                 <div class="swatch" id="mainSwatch" style="background:#FFFFFF;"></div>

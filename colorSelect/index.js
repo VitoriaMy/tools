@@ -11,6 +11,7 @@ const mainLabel = document.getElementById('mainLabel');
 const hoverPosEl = document.getElementById('hoverPos');
 const hoverColorEl = document.getElementById('hoverColor');
 const hoverSwatchEl = document.getElementById('hoverSwatch');
+const axesToggle = document.getElementById('axesToggle');
 
 // ---------- helpers ----------
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -123,6 +124,10 @@ for (const [key, def] of Object.entries(channelDefs)) {
     scene.add(axis);
     axes[key] = { mesh: axis, def };
 }
+
+axesToggle.addEventListener('change', () => {
+    for (const { mesh } of Object.values(axes)) mesh.visible = axesToggle.checked;
+});
 
 function updateAxisGeometry(key) {
     const { mesh, def } = axes[key];
