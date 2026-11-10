@@ -40,7 +40,6 @@
             border-radius: 10px; background: #2a2e37; color: #cfd3d9;
         }
         .badge.hovering { background: #4a4a1a; color: #f5f5c8; }
-        .badge.axis-hovering { background: #17343b; color: #b8f5ff; }
         section { margin-bottom: 18px; }
         .row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 4px 0; }
         .row .label { color: #9aa0a6; flex: none; }
@@ -56,11 +55,13 @@
         .tag-r { background: #ff5a5a; }
         .tag-g { background: #5aff7a; }
         .tag-b { background: #5a8cff; }
-        .channel .num { font-variant-numeric: tabular-nums; }
         .channel .range { margin-left: auto; color: #9aa0a6; font-size: 12px; font-variant-numeric: tabular-nums; }
         .channel input[type=range] { width: 100%; margin: 2px 0; accent-color: #7a8cff; }
-        .thick-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #9aa0a6; }
-        .thick-row label { flex: none; }
+        .range-control { position: relative; height: 30px; touch-action: none; user-select: none; }
+        .range-track { position: absolute; left: 9px; right: 9px; top: 13px; height: 4px; border: 1px solid #59616e; border-radius: 4px; background: #454b55; }
+        .range-fill { position: absolute; top: 13px; height: 4px; border-radius: 4px; background: #7a8cff; pointer-events: none; }
+        .range-thumb { position: absolute; top: 15px; width: 18px; height: 18px; transform: translate(-50%, -50%); border: 2px solid #aeb8ff; border-radius: 50%; background: #7a8cff; cursor: ew-resize; z-index: 1; }
+        .range-thumb:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
         .foot { font-size: 11px; color: #6b7280; line-height: 1.6; margin: 0; }
     </style>
 </head>
@@ -71,7 +72,7 @@
         </div>
         <aside id="panel">
             <h1>3D 取色器</h1>
-            <p class="hint">R / G / B 分别控制模型 X / Y / Z 轴尺寸。直接拖动 3D 视图中带刻度的彩色坐标轴，数值按整数刻度变化；悬停模型表面查看对应 RGB 选区。</p>
+            <p class="hint">分别拖动 R / G / B 的最小值和最大值，调整当前颜色范围。3D 视图仅展示范围模型；悬停表面查看对应色值，拖动空白处旋转视角。</p>
 
             <section class="swatch-block">
                 <div class="swatch" id="mainSwatch" style="background:#FFFFFF;"></div>
@@ -93,7 +94,7 @@
 
             <section id="channels"></section>
 
-            <p class="foot">拖动红 / 绿 / 蓝坐标轴调整尺寸；拖动空白处旋转视角，滚轮缩放。</p>
+            <p class="foot">每个通道的最小值与最大值可独立调整；滚轮缩放视图。</p>
         </aside>
     </div>
 
