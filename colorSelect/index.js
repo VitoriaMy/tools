@@ -206,9 +206,13 @@ let hovered = null; // { r, g, b, x, y, z }
 const hoverTargets = [cube];
 
 function setPointer(e) {
+    setPointerPosition(e.clientX, e.clientY);
+}
+
+function setPointerPosition(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
-    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
 }
 
 function getModelHit() {
@@ -279,6 +283,8 @@ for (const key of ['r', 'g', 'b']) {
     };
 
     let activeEndpoint = null;
+    let equalRangePending = false;
+    let dragStartX = 0;
     const setEndpoint = (endpoint, value) => {
         const range = channelRanges[key];
         if (endpoint === 'min') range.min = Math.min(value, range.max);
@@ -297,22 +303,31 @@ for (const key of ['r', 'g', 'b']) {
         event.preventDefault();
         const range = channelRanges[key];
         const thumb = event.target.closest('.range-thumb');
-        if (thumb) activeEndpoint = thumb.dataset.endpoint;
+        equalRangePending = range.min === range.max;
+        dragStartX = event.clientX;
+        if (equalRangePending) activeEndpoint = null;
+        else if (thumb) activeEndpoint = thumb.dataset.endpoint;
         else {
             const value = valueAt(event.clientX);
             activeEndpoint = Math.abs(value - range.min) <= Math.abs(value - range.max) ? 'min' : 'max';
         }
         el.control.setPointerCapture(event.pointerId);
-        setEndpoint(activeEndpoint, valueAt(event.clientX));
+        if (activeEndpoint) setEndpoint(activeEndpoint, valueAt(event.clientX));
     });
     el.control.addEventListener('pointermove', (event) => {
-        if (activeEndpoint && el.control.hasPointerCapture(event.pointerId)) {
-            setEndpoint(activeEndpoint, valueAt(event.clientX));
+        if (!el.control.hasPointerCapture(event.pointerId)) return;
+        if (equalRangePending) {
+            const direction = event.clientX - dragStartX;
+            if (direction === 0) return;
+            activeEndpoint = direction > 0 ? 'max' : 'min';
+            equalRangePending = false;
         }
+        if (activeEndpoint) setEndpoint(activeEndpoint, valueAt(event.clientX));
     });
     const stopDrag = (event) => {
         if (el.control.hasPointerCapture(event.pointerId)) el.control.releasePointerCapture(event.pointerId);
         activeEndpoint = null;
+        equalRangePending = false;
     };
     el.control.addEventListener('pointerup', stopDrag);
     el.control.addEventListener('pointercancel', stopDrag);
@@ -380,44 +395,36 @@ function refresh() {
     updatePanel();
 }
 
+function clearHover() {
+    if (!hovered) return;
+    updateHover(null);
+    refresh();
+}
+
 // ---------- 交互：仅模型表面取色，画布拖动旋转视角 ----------
 let orbitState = null;
-const activePointers = new Map();
 let pinchState = null;
+let touchOrbitState = null;
+let webkitGestureRadius = null;
 
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+canvas.addEventListener('pointerleave', clearHover);
+window.addEventListener('blur', clearHover);
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) clearHover();
+});
 
 canvas.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'touch') return;
     if (e.button !== 0 && e.button !== 2) return;
     setPointer(e);
-    if (e.pointerType === 'touch') {
-        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        if (activePointers.size === 2) {
-            orbitState = null;
-            const [first, second] = [...activePointers.values()];
-            pinchState = {
-                distance: Math.hypot(first.x - second.x, first.y - second.y),
-                radius: spherical.radius,
-            };
-            return;
-        }
-    }
     orbitState = { startX: e.clientX, startY: e.clientY, theta: spherical.theta, phi: spherical.phi, moved: false };
     canvas.style.cursor = 'grabbing';
 });
 
 window.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'touch') return;
     setPointer(e);
-    if (activePointers.has(e.pointerId)) activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (activePointers.size >= 2) {
-        const [first, second] = [...activePointers.values()];
-        const distance = Math.hypot(first.x - second.x, first.y - second.y);
-        if (pinchState && pinchState.distance > 0) {
-            spherical.radius = clamp(pinchState.radius * pinchState.distance / distance, 2, 2000);
-            updateCamera();
-        }
-        return;
-    }
     if (orbitState) {
         const dx = e.clientX - orbitState.startX;
         const dy = e.clientY - orbitState.startY;
@@ -437,23 +444,130 @@ window.addEventListener('pointermove', (e) => {
 });
 
 window.addEventListener('pointerup', (e) => {
-    const shouldPick = e.pointerType === 'touch' && orbitState && !orbitState.moved;
-    if (shouldPick) {
-        setPointer(e);
-        updateHover(getModelHit());
-        refresh();
-    }
-    activePointers.delete(e.pointerId);
+    if (e.pointerType === 'touch') return;
     orbitState = null;
-    if (activePointers.size < 2) pinchState = null;
     canvas.style.cursor = 'default';
 });
 
 window.addEventListener('pointercancel', (e) => {
-    activePointers.delete(e.pointerId);
+    if (e.pointerType === 'touch') return;
     orbitState = null;
-    pinchState = null;
 });
+
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touches = Array.from(e.touches);
+    if (touches.length >= 2) {
+        const [first, second] = touches;
+        const centerX = (first.clientX + second.clientX) / 2;
+        const centerY = (first.clientY + second.clientY) / 2;
+        setPointerPosition(centerX, centerY);
+        const modelHit = getModelHit();
+        pinchState = {
+            distance: Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY),
+            radius: spherical.radius,
+            target: target.clone(),
+            focus: modelHit ? modelHit.point.clone() : target.clone(),
+        };
+        touchOrbitState = null;
+        orbitState = null;
+        return;
+    }
+
+    const touch = touches[0];
+    if (touch) {
+        touchOrbitState = {
+            startX: touch.clientX,
+            startY: touch.clientY,
+            theta: spherical.theta,
+            phi: spherical.phi,
+            moved: false,
+        };
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const touches = Array.from(e.touches);
+    if (touches.length >= 2 && pinchState) {
+        const [first, second] = touches;
+        const distance = Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
+        const zoomRatio = pinchState.distance / Math.max(1, distance);
+        spherical.radius = clamp(pinchState.radius * zoomRatio, 2, 2000);
+        target.lerpVectors(pinchState.focus, pinchState.target, zoomRatio);
+        updateCamera();
+        return;
+    }
+
+    if (touches.length === 1 && touchOrbitState) {
+        const touch = touches[0];
+        const dx = touch.clientX - touchOrbitState.startX;
+        const dy = touch.clientY - touchOrbitState.startY;
+        if (Math.hypot(dx, dy) > 3) touchOrbitState.moved = true;
+        if (touchOrbitState.moved) {
+            spherical.theta = touchOrbitState.theta - dx * 0.005;
+            spherical.phi = clamp(touchOrbitState.phi - dy * 0.005, 0.15, Math.PI - 0.15);
+            updateCamera();
+        }
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    if (pinchState) {
+        pinchState = null;
+        touchOrbitState = null;
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            touchOrbitState = {
+                startX: touch.clientX,
+                startY: touch.clientY,
+                theta: spherical.theta,
+                phi: spherical.phi,
+                moved: true,
+            };
+        }
+        return;
+    }
+
+    const shouldPick = touchOrbitState && !touchOrbitState.moved && e.changedTouches.length > 0;
+    if (shouldPick) {
+        const touch = e.changedTouches[0];
+        setPointerPosition(touch.clientX, touch.clientY);
+        updateHover(getModelHit());
+        refresh();
+    }
+    touchOrbitState = null;
+}, { passive: false });
+
+canvas.addEventListener('touchcancel', (e) => {
+    e.preventDefault();
+    pinchState = null;
+    touchOrbitState = null;
+}, { passive: false });
+
+canvas.addEventListener('gesturestart', (e) => {
+    e.preventDefault();
+    webkitGestureRadius = spherical.radius;
+}, { passive: false });
+
+canvas.addEventListener('gesturechange', (e) => {
+    e.preventDefault();
+    if (webkitGestureRadius && Number.isFinite(e.scale)) {
+        spherical.radius = clamp(webkitGestureRadius / e.scale, 2, 2000);
+        updateCamera();
+    }
+}, { passive: false });
+
+canvas.addEventListener('gestureend', (e) => {
+    e.preventDefault();
+    webkitGestureRadius = null;
+}, { passive: false });
+
+const preventNativeGesture = (e) => e.preventDefault();
+for (const eventName of ['gesturestart', 'gesturechange', 'gestureend']) {
+    document.addEventListener(eventName, preventNativeGesture, { capture: true, passive: false });
+}
 
 canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
